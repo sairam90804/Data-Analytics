@@ -1,0 +1,159 @@
+---
+title: "Data Merger"
+author: "Ramesh Chandra Reddy Musilanna"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r}
+library(readr)
+library(caret)
+
+Emissions_CO2_NO2_df <- read_csv("/Users/ramesh/Desktop/IIT files/Subjects/DPA CSP 571/Project Datasets/Emissions_CO2_NO2.csv")
+
+Temperature_Change_df <- read_csv("/Users/ramesh/Library/CloudStorage/OneDrive-IllinoisInstituteofTechnology/DPA Project/Project Datasets/Temperature Change.csv")
+
+
+```
+
+
+
+```{r}
+#Emissions_CO2_NO2_df
+# dim(Emissions_CO2_NO2_df)
+names(Emissions_CO2_NO2_df)
+
+# Emissions_CO2_NO2_df[1,]
+names(Emissions_CO2_NO2_df)[c(1,2,5,6,7,8,13,14)] <- c('Emissions_Domain Code', 'Emissions_Domain', 'Emissions_Element Code', 'Emissions_Element', 'Emissions_Item Code', 'Emissions_Item', 'Emissions_Unit', 'Emissions_Value')
+names(Emissions_CO2_NO2_df)
+```
+
+
+```{r}
+#Temperature_Change_df
+# dim(Temperature_Change_df)
+names(Temperature_Change_df)
+# Temperature_Change_df[1,]
+
+names(Temperature_Change_df)[c(1,2,5,6,7,8,11,12)] <- c('Temp_Change_Domain Code',
+'Temp_Change_Domain',
+'Temp_Change_Element Code',
+'Temp_Change_Element',
+'Temp_Change_Months Code',
+'Temp_Change_Months',
+'Temp_Change_Unit',
+'Temp_Change_Value')
+
+# print("----------------")
+
+names(Temperature_Change_df)
+```
+
+
+```{r}
+names(Emissions_CO2_NO2_df)
+print("--------------------------------------------------------------------------------")
+names(Temperature_Change_df)
+```
+
+
+```{r}
+library(dplyr)
+Emissions_CO2_NO2_df_1 <- subset(Emissions_CO2_NO2_df, select = c(
+  "Emissions_Domain Code","Emissions_Domain","Area Code (M49)","Area" ,"Emissions_Element Code", "Emissions_Element", "Emissions_Item Code",  "Emissions_Item", "Year", "Emissions_Unit",  "Emissions_Value"))
+
+
+names(Emissions_CO2_NO2_df_1)
+```
+```{r}
+
+Temperature_Change_df_1 <- subset(Temperature_Change_df, select = c(
+'Temp_Change_Domain Code',
+'Temp_Change_Domain',
+'Area Code (M49)',
+'Area' ,
+'Temp_Change_Element Code',
+'Temp_Change_Element',
+'Temp_Change_Months Code',
+'Temp_Change_Months',
+'Year',
+'Temp_Change_Unit',
+'Temp_Change_Value'
+))
+dim(Temperature_Change_df)
+dim(Temperature_Change_df_1)
+names(Temperature_Change_df_1)
+```
+
+
+
+```{r}
+# remove spaces in column names and replace with underscores
+colnames(Emissions_CO2_NO2_df_1) <- gsub(" ", "_", colnames(Emissions_CO2_NO2_df_1))
+
+colnames(Temperature_Change_df_1) <- gsub(" ", "_", colnames(Temperature_Change_df_1))
+
+
+# remove parentheses in column names
+colnames(Emissions_CO2_NO2_df_1) <- gsub("[()]", "", colnames(Emissions_CO2_NO2_df_1))
+
+colnames(Temperature_Change_df_1) <- gsub("[()]", "", colnames(Temperature_Change_df_1))
+```
+
+
+```{r}
+names(Temperature_Change_df_1)
+
+names(Emissions_CO2_NO2_df_1)
+
+```
+
+```{r}
+
+# merge the two data frames based on Year, Area, and Area_Code_M49 columns
+merged_data <- merge(Temperature_Change_df_1, Emissions_CO2_NO2_df_1, by = c("Year", "Area", "Area_Code_M49"))
+
+# print the merged data frame
+names(merged_data)
+
+```
+
+#Sample Code to merge all columns
+```{r}
+
+# create Var 1 data frame
+var1 <- data.frame(
+  Temp_Change_Domain_Code = "ET",
+  Temp_Change_Domain = "Temperature change",
+  Area_Code_M49 = "004",
+  Area = "Afghanistan",
+  Temp_Change_Element_Code = "7271",
+  Temp_Change_Element = "Temperature change",
+  Temp_Change_Months_Code = "7001",
+  Temp_Change_Months = "January",
+  Year = "2000"
+)
+
+# create Var 2 data frame
+var2 <- data.frame(
+  Emissions_Domain_Code = "GT",
+  Emissions_Domain = "Emissions Totals",
+  Area_Code_M49 = "004",
+  Area = "Afghanistan",
+  Emissions_Element_Code = "7273",
+  Emissions_Element = "Emissions (CO2)",
+  Emissions_Item_Code = "6751",
+  Emissions_Item = "Forestland",
+  Year = "2000",
+  Emissions_Unit = "kilotonnes"
+)
+
+# merge the two data frames based on Year, Area, and Area_Code_M49 columns
+merged_data <- merge(var1, var2, by = c("Year", "Area", "Area_Code_M49"))
+
+# print the merged data frame
+names(merged_data)
+
+```
+
+

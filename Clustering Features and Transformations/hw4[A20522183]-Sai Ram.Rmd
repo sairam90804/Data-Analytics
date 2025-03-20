@@ -1,0 +1,185 @@
+---
+title: "Homework 4"
+author: "sairam"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+#### Homework 4
+
+###Problem 1
+
+``` {r}
+# Load required packages
+library(rpart)
+library(rpart.plot)
+
+# Simulate binary classification dataset
+set.seed(1)
+num_samples <- 100
+
+class_1 <- data.frame(feature = rnorm(num_samples, mean = 5, sd = 2), label = 1)
+class_2 <- data.frame(feature = rnorm(num_samples, mean = -5, sd = 2), label = 0)
+dataset <- rbind(class_1, class_2)
+
+# Induce a binary decision tree
+tree <- rpart(label ~ feature, data = dataset, method = "class")
+rpart.plot(tree, main = "Binary Decision Tree")
+
+# Set the threshold for classification
+threshold <- 0.093
+
+# Plot the histogram of the feature and add a vertical line for the threshold
+# Plot the histogram for class 1
+hist(class_1$feature, col = rgb(0, 0, 1, alpha = 0.5), xlim = range(dataset$feature), main = "Histogram of the Feature", xlab = "Feature Value", ylab = "Frequency", breaks = 30)
+
+# Add the histogram for class 2 on the same plot
+hist(class_2$feature, col = rgb(1, 0, 0, alpha = 0.5), add = TRUE, breaks = 30)
+
+# Add the threshold line
+abline(v = threshold, col = "green", lwd = 2)
+
+# Add a legend
+legend("topright", legend = c("Class 1", "Class 2", "Threshold"), col = c(rgb(0, 0, 1, alpha = 0.5), rgb(1, 0, 0, alpha = 0.5), "green"), lwd = 2)
+
+
+# Repeat with normal distributions of (1, 2) and (-1, 2)
+class_1_2 <- data.frame(feature = rnorm(num_samples, mean = 1, sd = 2), label = 1)
+class_2_2 <- data.frame(feature = rnorm(num_samples, mean = -1, sd = 2), label = 0)
+dataset_2 <- rbind(class_1_2, class_2_2)
+
+tree_2 <- rpart(label ~ feature, data = dataset_2, method = "class")
+rpart.plot(tree_2, main = "Binary Decision Tree with Close Means")
+
+# Number of nodes in the tree_2
+num_nodes_2 <- tree_2$frame$n
+num_nodes_2
+
+# Prune the tree with complexity parameter of 0.1
+pruned_tree <- prune(tree_2, cp = 0.1)
+rpart.plot(pruned_tree, main = "Pruned Binary Decision Tree with cp = 0.1")
+
+```
+
+####Problem 2
+```{r}
+
+# Load necessary libraries
+library(caret)
+library(rpart)
+library(rpart.plot)
+library(randomForest)
+
+# Define function to read data and return cleaned data frame
+read_and_clean_data <- function(url) {
+  # Read data
+  raw_df <- read.csv(url, header = TRUE, sep = ";")
+  # Clean data
+  df <- raw_df 
+  df$quality <- as.factor(df$quality)
+  return(df)
+}
+
+# Read and clean white wine data
+white_data_url <- "https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv"
+white_df <- read_and_clean_data(white_data_url)
+white_dim <- dim(white_df)
+cat("White wine data dimensions:", white_dim, "\n")
+
+# Split white wine data into training and test sets
+inTrain <- createDataPartition(white_df$quality, p = 0.8, list = F)
+white_df_train <- white_df[inTrain,]
+white_df_test <- white_df[-inTrain,]
+
+# Fit decision tree to white wine training data and plot it
+white_df_train_dt <- rpart(quality ~ ., data = white_df_train)
+rpart.plot(white_df_train_dt)
+
+# Predict quality of white wine test set using decision tree and print accuracy
+dt.predict.white_df <- predict(white_df_train_dt, white_df_test, type = 'class')
+q1 <- confusionMatrix(dt.predict.white_df, white_df_test$quality)
+cat("White wine data accuracy with decision tree:", q1$overall['Accuracy']*100, "%\n")
+
+# Fit random forest to white wine training data
+rf.white_df_train <- train(quality ~ ., data = white_df_train, method = "rf", preProcess = c("center", "scale"))
+
+# Predict quality of white wine test set using random forest and print accuracy
+rf.predict.white_df <- predict(rf.white_df_train, white_df_test)
+q3 <- confusionMatrix(rf.predict.white_df, white_df_test$quality)
+cat("White wine data accuracy with random forest:", q3$overall['Accuracy']*100, "%\n")
+
+# Read and clean red wine data
+red_data_url <- "https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-red.csv"
+red_df <- read_and_clean_data(red_data_url)
+red_dim <- dim(red_df)
+cat("Red wine data dimensions:", red_dim, "\n")
+
+# Split red wine data into training and test sets
+inTrainr <- createDataPartition(red_df$quality, p = 0.8, list = F)
+red_df_train <- red_df[inTrainr,]
+red_df_test <- red_df[-inTrainr,]
+
+# Fit decision tree to red wine training data and plot it
+red_df_train_dt <- rpart(quality ~ ., data = red_df_train)
+rpart.plot(red_df_train_dt)
+
+# Predict quality of red wine test set using decision tree and print accuracy
+dt.predict.red_df <- predict(red_df_train_dt, red_df_test, type = 'class')
+q2 <- confusionMatrix(dt.predict.red_df, red_df_test$quality)
+cat("Red wine data accuracy with decision tree:", q2$overall['Accuracy']*100, "%\n")
+
+# Fit random forest to red wine training data
+rf.red_df_train <- train(quality ~ ., data = red_df_train, method = "rf", preProcess = c("center", "scale"))
+
+# Predict quality of red wine test set using random forest and print accuracy
+rf.predict.red_df <- predict(rf.red_df_train, red_df_test)
+q4 <- confusionMatrix(rf.predict.red_df)
+
+```
+
+```{r}
+
+# Load required packages
+library(tm)
+library(e1071)
+
+# Load SMS Spam Collection dataset and set column names
+sms_data <- read.csv("SMSSpamCollection", sep = "\t", quote = "`", header = FALSE, stringsAsFactors = FALSE, allowEscapes = TRUE)
+colnames(sms_data) <- c("label", "text")
+
+# Create a Corpus of documents
+sms_corpus <- VCorpus(VectorSource(sms_data$text))
+
+# Apply transformations to the corpus
+sms_corpus <- tm_map(sms_corpus, content_transformer(tolower))
+sms_corpus <- tm_map(sms_corpus, removeWords, stopwords("english"))
+sms_corpus <- tm_map(sms_corpus, stripWhitespace)
+sms_corpus <- tm_map(sms_corpus, removePunctuation)
+
+# Construct features from words occurring more than 10 times
+sms_tdm <- DocumentTermMatrix(sms_corpus, control = list(minWordLength = 1))
+sms_tdm <- removeSparseTerms(sms_tdm, 0.999)
+sms_tdm <- weightTfIdf(sms_tdm)
+
+# Split data into training and test sets
+sms_train <- sms_tdm[1:4000, ]
+sms_test <- sms_tdm[4001:5574, ]
+
+# Convert the label column to factors
+sms_data$label <- as.factor(sms_data$label)
+
+# Fit a SVM using e1071 package
+sms_svm <- svm(x = sms_train, y = sms_data[1:4000, ]$label, type = "C-classification", kernel = "linear")
+
+# Calculate training and test set accuracy
+train_preds <- predict(sms_svm, sms_train)
+test_preds <- predict(sms_svm, sms_test)
+
+train_accuracy <- mean(train_preds == sms_data[1:4000, ]$label)
+test_accuracy <- mean(test_preds == sms_data[4001:5574, ]$label)
+
+# Print the accuracies
+cat("Training set accuracy:", train_accuracy, "\n")
+cat("Test set accuracy:", test_accuracy, "\n")
+
+```

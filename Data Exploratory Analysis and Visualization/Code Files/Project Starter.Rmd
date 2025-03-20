@@ -1,0 +1,59 @@
+---
+title: "DPA Project Starter"
+author: "Ramesh Chandra Reddy Musilanna"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r}
+
+# Importing the necessary libraries
+library(readr)
+library(caret)
+
+# Loading the data from CSV file
+data <- read_csv("/Users/ramesh/Desktop/IIT files/Subjects/DPA CSP 571/Project Datasets/Emissions_CO2_NO2.csv")
+
+# Removing the Note column
+data <- subset(data, select = -c(Note))
+
+# Removing rows with missing or NaN values in the Value column
+data <- data[complete.cases(data$Value),]
+
+# Converting the Area, Year, and Item columns to factors
+data$Area <- as.factor(data$Area)
+data$Element <- as.factor(data$Element)
+data$Year <- as.factor(data$Year)
+data$Item <- as.factor(data$Item)
+
+# Adding the missing level to the Year factor variable in the train dataset
+levels(data$Year) <- c(levels(data$Year), "2022")
+
+# Splitting the dataset into training and testing sets
+set.seed(123)
+#p <- min(0.7, (n_obs - 1) / n_obs)
+split <- createDataPartition(data$Value, p=0.7, list=FALSE)
+train <- data[split, ]
+test <- data[-split, ]
+
+# Creating the linear regression model
+model <- train(Value ~ Area + Element + Year + Item, data=train, method="lm")
+
+# Predicting the CO2 emissions for a new dataset
+new_data <- data.frame(Area = "India", Year = factor(2022), Item = "Forestland", Element = c("CO2", "NO2"))
+predicted_value <- predict(model, newdata = new_data)
+
+predicted_value
+```
+
+```{r}
+
+# Predicting the target variable on the testing set
+pred <- predict(model, newdata=test)
+
+# Evaluating the model performance
+RMSE <- RMSE(pred, test$target)
+R2 <- R2(pred, test$target)
+
+
+```
